@@ -1,6 +1,5 @@
-lvim.colorscheme = "dracula"
+lvim.colorscheme = "cyberdream"
 
--- if you don't want all the parsers change this to a table of the ones you want
 lvim.builtin.treesitter.ensure_installed = {
   "lua",
   "rust",
@@ -123,7 +122,18 @@ lvim.builtin.which_key.mappings["C"] = {
 }
 
 lvim.plugins = {
+  "declancm/cinnamon.nvim",
+  "mfussenegger/nvim-dap-python",
   "simrat39/rust-tools.nvim",
+  {
+      "scottmckendry/cyberdream.nvim",
+      lazy = false,
+      priority = 1000,
+  },
+  {
+    "olimorris/onedarkpro.nvim",
+    priority = 1000, -- Ensure it loads first
+  },
   {
     "saecki/crates.nvim",
     version = "v0.3.0",
@@ -159,6 +169,7 @@ lvim.plugins = {
     event = "VeryLazy",
     config = true,
   },
+  { "APZelos/blamer.nvim" },
 }
 require("lvim.lsp.manager").setup("angularls")
 require('nvim-ts-autotag').setup({
@@ -194,3 +205,62 @@ lvim.builtin.which_key.mappings["a"] = {
   C = { "<cmd>lua vim.ui.input({prompt='NG:'}, Angular_cli)<cr>", "Angular CLI" },
 }
 vim.keymap.set("n", "<leader>d", vim.diagnostic.open_float)
+lvim.builtin.which_key.mappings["l"]["h"] = { "<cmd>ClangdSwitchSourceHeader<cr>", "Switch Header/Source" }
+
+-- DEBUGGER
+
+local dap = require('dap')
+
+dap.adapters.cppdbg = {
+  id = 'cppdbg',
+  type = 'executable',
+  command = vim.env.HOME .. '/cpptools/extension/debugAdapters/bin/OpenDebugAD7',
+}
+
+dap.configurations.cpp = {
+  {
+    name = "Launch file",
+    type = "cppdbg",
+    request = "launch",
+    miDebuggerPath = '/usr/bin/gdb',
+    program = function()
+      return vim.fn.input('Path to executable: ', vim.fn.getcwd() .. '/', 'file')
+    end,
+    cwd = '${workspaceFolder}',
+    stopAtEntry = true,
+  },
+  {
+    name = 'Attach to gdbserver :1234',
+    type = 'cppdbg',
+    request = 'launch',
+    MIMode = 'gdb',
+    miDebuggerServerAddress = 'localhost:1234',
+    miDebuggerPath = '/usr/bin/gdb',
+    cwd = '${workspaceFolder}',
+    program = function()
+      return vim.fn.input('Path to executable: ', vim.fn.getcwd() .. '/', 'file')
+    end,
+  },
+}
+
+require('dap-python').setup('/usr/bin/python')
+dap.configurations.python = {
+  {
+      type = 'python',
+      request = 'launch',
+      name = 'My custom launch configuration',
+      program = '${file}',
+  }
+}
+
+require("cinnamon").setup {
+    -- Enable all provided keymaps
+    keymaps = {
+        basic = true,
+        extra = true,
+    },
+    -- Only scroll the window
+    options = { mode = "window" },
+}
+
+require'lspconfig'.clangd.setup{}
